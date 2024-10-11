@@ -1,76 +1,116 @@
 import streamlit as st
-from PIL import Image
+import requests
 
-# Set background color and font style using custom CSS
+# Set custom CSS for colors, fonts, and styles
 st.markdown("""
     <style>
     body {
-        background-color: #f5f5f5;
-        font-family: 'Helvetica', sans-serif;
+        background-color: #1c1c1c;
+        color: #f5f5f5;
+        font-family: 'Arial', sans-serif;
     }
     .title {
-        color: #4a4a4a;
+        color: #ff69b4;
         font-size: 50px;
         font-weight: bold;
     }
-    .header {
-        color: #2e8b57;
+    .subheader {
+        color: #ff1493;
         font-size: 36px;
         font-weight: bold;
     }
-    .subheader {
-        color: #d2691e;
-        font-size: 28px;
-    }
-    .question-text {
-        font-size: 20px;
-        font-weight: bold;
-    }
-    .stRadio {
-        color: #333;
-        background-color: #fff;
-    }
     .stButton>button {
-        background-color: #008cba;
+        background-color: #ff69b4;
         color: white;
-        border-radius: 8px;
+        border-radius: 10px;
         padding: 10px 20px;
+        font-size: 18px;
     }
     .stButton>button:hover {
-        background-color: #005f73;
+        background-color: #ff1493;
+        color: white;
+    }
+    .stRadio>div>div {
         color: white;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# Title and Header
-st.markdown('<p class="title">AI Mock Interview Website</p>', unsafe_allow_html=True)
-st.markdown('<p class="header">Welcome to the Mock Interview Portal</p>', unsafe_allow_html=True)
+# Sidebar for navigation
+st.sidebar.title("Mock Interview Navigation")
+pages = ["MCQ Round", "Coding Round", "Communication Round"]
+page = st.sidebar.radio("Go to", pages)
 
-# Optional: Add an image (can be replaced by your image)
-st.image('https://via.placeholder.com/400x100', caption='Interview Simulation', use_column_width=True)
+# Fetch random MCQs from Open Trivia DB API
+def get_random_mcq():
+    url = "https://opentdb.com/api.php?amount=1&type=multiple"
+    response = requests.get(url).json()
+    question_data = response['results'][0]
+    question = question_data['question']
+    correct_answer = question_data['correct_answer']
+    incorrect_answers = question_data['incorrect_answers']
+    return question, correct_answer, incorrect_answers
 
-# Aptitude Section
-st.markdown('<p class="subheader">Aptitude Question</p>', unsafe_allow_html=True)
-st.markdown('<p class="question-text">What is 5 + 7?</p>', unsafe_allow_html=True)
-answer = st.radio("", ['10', '11', '12', '13'])
-
-# Submit Button
-if st.button("Submit Answer"):
-    if answer == '12':
-        st.success("🎉 Correct Answer!")
+# Function for AI feedback
+def generate_feedback(score):
+    if score > 80:
+        return "Excellent performance! Keep up the great work!"
+    elif score > 50:
+        return "Good job! But there's room for improvement."
     else:
-        st.error("❌ Wrong Answer, try again!")
+        return "You need to work harder. Review the basics and try again."
 
-# Programming Section
-st.markdown('<p class="subheader">Programming Question</p>', unsafe_allow_html=True)
-code_answer = st.text_area("Write a Python function to calculate the factorial of a number.")
+# MCQ Round
+if page == "MCQ Round":
+    st.markdown('<p class="title">Multiple Choice Questions (MCQ)</p>', unsafe_allow_html=True)
+    question, correct_answer, incorrect_answers = get_random_mcq()
+    answers = incorrect_answers + [correct_answer]
+    st.markdown(f"<p class='subheader'>{question}</p>", unsafe_allow_html=True)
+    user_answer = st.radio("Choose your answer:", answers)
+    
+    if st.button("Submit Answer"):
+        if user_answer == correct_answer:
+            st.success("Correct!")
+        else:
+            st.error(f"Incorrect! The correct answer was {correct_answer}.")
 
-if st.button("Submit Code"):
-    if "def factorial" in code_answer:
-        st.success("🎉 Good job!")
-    else:
-        st.error("❌ Please write a valid function.")
+# Coding Round
+elif page == "Coding Round":
+    st.markdown('<p class="title">Coding Challenge</p>', unsafe_allow_html=True)
+    st.markdown('<p class="subheader">Write a Python function to reverse a string.</p>', unsafe_allow_html=True)
+    
+    code_answer = st.text_area("Write your code below:")
+    
+    if st.button("Run Code"):
+        if "def reverse_string" in code_answer:
+            st.success("Good code structure!")
+        else:
+            st.error("Try again! Make sure to define the function properly.")
+    
+    # AI Feedback
+    st.markdown('<p class="subheader">AI Feedback</p>', unsafe_allow_html=True)
+    score = 70  # Example score based on some criteria
+    st.write(generate_feedback(score))
 
-# End of mock interview
-st.write("### Thank you for participating in the mock interview.")
+# Communication Round
+elif page == "Communication Round":
+    st.markdown('<p class="title">Communication Practice</p>', unsafe_allow_html=True)
+    st.markdown('<p class="subheader">Practice a short introduction for an interview.</p>', unsafe_allow_html=True)
+    
+    intro = st.text_area("Introduce yourself:")
+    
+    if st.button("Submit"):
+        st.write("Thank you for your introduction!")
+        
+        # Simple AI analysis (just a placeholder)
+        if len(intro.split()) > 30:
+            st.success("Great introduction! You explained well.")
+        else:
+            st.warning("Your introduction is too short. Try to add more details.")
+
+    # Communication tips
+    st.markdown('<p class="subheader">AI Communication Tips</p>', unsafe_allow_html=True)
+    st.write("Tip: Speak clearly and confidently, and maintain good body language.")
+
+# Footer
+st.sidebar.write("### Powered by AI Mock Interview Platform")
