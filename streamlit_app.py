@@ -44,12 +44,19 @@ page = st.sidebar.radio("Go to", pages)
 # Fetch random MCQs from Open Trivia DB API
 def get_random_mcq():
     url = "https://opentdb.com/api.php?amount=1&type=multiple"
-    response = requests.get(url).json()
-    question_data = response['results'][0]
-    question = question_data['question']
-    correct_answer = question_data['correct_answer']
-    incorrect_answers = question_data['incorrect_answers']
-    return question, correct_answer, incorrect_answers
+    try:
+        response = requests.get(url).json()
+        if 'results' in response and response['results']:
+            question_data = response['results'][0]
+            question = question_data['question']
+            correct_answer = question_data['correct_answer']
+            incorrect_answers = question_data['incorrect_answers']
+            return question, correct_answer, incorrect_answers
+        else:
+            return None, None, None
+    except Exception as e:
+        st.error(f"Error fetching question: {e}")
+        return None, None, None
 
 # Function for AI feedback
 def generate_feedback(score):
@@ -64,15 +71,19 @@ def generate_feedback(score):
 if page == "MCQ Round":
     st.markdown('<p class="title">Multiple Choice Questions (MCQ)</p>', unsafe_allow_html=True)
     question, correct_answer, incorrect_answers = get_random_mcq()
-    answers = incorrect_answers + [correct_answer]
-    st.markdown(f"<p class='subheader'>{question}</p>", unsafe_allow_html=True)
-    user_answer = st.radio("Choose your answer:", answers)
     
-    if st.button("Submit Answer"):
-        if user_answer == correct_answer:
-            st.success("Correct!")
-        else:
-            st.error(f"Incorrect! The correct answer was {correct_answer}.")
+    if question:
+        answers = incorrect_answers + [correct_answer]
+        st.markdown(f"<p class='subheader'>{question}</p>", unsafe_allow_html=True)
+        user_answer = st.radio("Choose your answer:", answers)
+    
+        if st.button("Submit Answer"):
+            if user_answer == correct_answer:
+                st.success("Correct!")
+            else:
+                st.error(f"Incorrect! The correct answer was {correct_answer}.")
+    else:
+        st.error("Unable to fetch a question at the moment. Please try again later.")
 
 # Coding Round
 elif page == "Coding Round":
